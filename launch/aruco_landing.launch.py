@@ -1,10 +1,8 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
-from ament_index_python.packages import get_package_share_directory
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def launch_setup(context, *args, **kwargs):
     # 'sim'引数の値を取得 ('true'ならシミュレーションモード)
@@ -12,9 +10,8 @@ def launch_setup(context, *args, **kwargs):
 
     # --- MAVROSノードの定義 ---
     if sim_mode:
-        # 【修正】14550番ポートにつなぐ設定 (標準的なSITL接続)
-        # 意味: 自分のポート14540を開けて、相手の14550にデータを送る
-        fcu_url = "udp://:14551@"
+        # MAVProxy/SITL relay: listen on local 14551 and send to 14550
+        fcu_url = "udp://:14551@127.0.0.1:14550"
     else:
         fcu_url = "/dev/ttyAMA0:921600" # 実機用の設定
 
@@ -46,24 +43,6 @@ def launch_setup(context, *args, **kwargs):
         }]
     )
     
-    # --- Intel RealSenseカメラの起動定義 ---
-    realsense_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            PathJoinSubstitution([
-                get_package_share_directory('realsense2_camera'),
-                'launch',
-                'rs_launch.py' 
-            ])
-        ]),
-        launch_arguments={
-            'pointcloud.enable': 'false',
-            'align_depth.enable': 'false',
-            'enable_infra1': 'false',
-            'enable_infra2': 'false',
-            'rgb_camera.profile': '640,480,15',
-        }.items()
-    )
-
     # --- 起動するノードのリストを作成 ---
     nodes_to_launch = []
     
@@ -74,7 +53,6 @@ def launch_setup(context, *args, **kwargs):
         ])
     else:
         nodes_to_launch.extend([
-            realsense_launch,
             mavros_node,
             aruco_landing_node
         ])

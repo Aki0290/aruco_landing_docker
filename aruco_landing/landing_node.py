@@ -67,11 +67,15 @@ class ArucoLandingNode(Node):
         self.pose_sub = self.create_subscription(
             PoseStamped, "/mavros/local_position/pose", self.pose_callback, mavros_qos
         )
+        self.declare_parameter("image_topic", "/camera/image")
+        self.declare_parameter("camera_info_topic", "/camera/camera_info")
+        self.image_topic = self.get_parameter("image_topic").value
+        self.camera_info_topic = self.get_parameter("camera_info_topic").value
         self.image_sub = self.create_subscription(
-            Image, "/camera/image", self.image_callback, mavros_qos
+            Image, self.image_topic, self.image_callback, mavros_qos
         )
         self.camera_info_sub = self.create_subscription(
-            CameraInfo, "/camera/camera_info", self.camera_info_callback, mavros_qos
+            CameraInfo, self.camera_info_topic, self.camera_info_callback, mavros_qos
         )
         self.setpoint_pub = self.create_publisher(
             PoseStamped, "/mavros/setpoint_position/local", mavros_qos
@@ -84,7 +88,7 @@ class ArucoLandingNode(Node):
         self.aruco_dict = aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
         self.aruco_params = aruco.DetectorParameters_create()
         self.camera_matrix = np.array(
-            [[205.46, 0.0, 320], [0.0, 205.46, 240], [0.0, 0.0, 2.0]]
+            [[205.46, 0.0, 320], [0.0, 205.46, 240], [0.0, 0.0, 1.0]]
         )
         self.dist_coeffs = np.zeros(5, dtype=np.float32)
         self.camera_info_received = False
@@ -168,7 +172,9 @@ class ArucoLandingNode(Node):
         self.camera_info_received = True
         if msg.header.frame_id:
             self.camera_frame = msg.header.frame_id
-        self.get_logger().info("Camera intrinsics loaded from /camera/camera_info.")
+        self.get_logger().info(
+            f"Camera intrinsics loaded from {self.camera_info_topic}."
+        )
 
     def control_loop(self):
         now = time.monotonic()
@@ -351,7 +357,10 @@ class ArucoLandingNode(Node):
     def detect_and_manage_objects(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, self.hsv_lower_green, self.hsv_upper_green)
-        _, contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours_result = cv2.findContours(
+            mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        )
+        contours = contours_result[-2]
 
         valid_contours = [
             cnt for cnt in contours if cv2.contourArea(cnt) > self.min_object_area

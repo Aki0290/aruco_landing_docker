@@ -32,6 +32,7 @@ install(
 install(
   PROGRAMS
     scripts/initialize_gimbal.py
+    scripts/robot_description_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

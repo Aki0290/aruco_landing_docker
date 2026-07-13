@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ardu_ws="${ARDU_WS:-$HOME/ardu_ws}"
@@ -52,7 +52,7 @@ chmod +x "$gz_repo/ardupilot_gz_bringup/scripts/initialize_gimbal.py"
 echo "Building ArduPilot Gazebo packages..."
 source /opt/ros/humble/setup.bash
 cd "$ardu_ws"
-colcon build --packages-up-to ardupilot_gz_bringup
+colcon build --packages-up-to ardupilot_gz_bringup --packages-skip micro_ros_agent --parallel-workers 2 --cmake-args -DBUILD_TESTING=OFF
 
 echo
 echo "Simulation assets installed successfully."

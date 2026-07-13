@@ -12,7 +12,7 @@ def launch_setup(context, *args, **kwargs):
     sim_mode = LaunchConfiguration("sim").perform(context) == "true"
 
     if sim_mode:
-        fcu_url = "udp://:14551@"
+        fcu_url = "udp://:14551@127.0.0.1:14550"
     else:
         fcu_url = "/dev/ttyAMA0:921600"
 

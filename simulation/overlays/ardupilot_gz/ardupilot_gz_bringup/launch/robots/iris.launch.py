@@ -141,6 +141,14 @@ def generate_launch_description():
         ],
     )
 
+    robot_description_publisher = Node(
+        package="ardupilot_gz_bringup",
+        executable="robot_description_publisher.py",
+        name="robot_description_publisher",
+        output="both",
+        parameters=[{"robot_description": robot_desc}],
+    )
+
     # Bridge.
     bridge = Node(
         package="ros_gz_bridge",
@@ -194,6 +202,7 @@ def generate_launch_description():
             ),
             sitl_dds,
             robot_state_publisher,
+            robot_description_publisher,
             bridge,
             RegisterEventHandler(
                 OnProcessStart(
