@@ -192,6 +192,28 @@ docker compose logs --tail=200
 
 Then check the application logs under `runtime/logs/`.
 
+### Gazebo opens but the drone does not work
+
+Check whether MAVProxy exited:
+
+```bash
+grep -E "Permission denied: 'mav.tlog'|process has died" runtime/logs/simulation.log
+```
+
+The `gz_frame_id` and `SDFormat link ... has a <sensor>` messages are
+compatibility warnings and do not mean that the Gazebo model failed to load.
+If `mav.tlog` reports a permission error, rebuild the current image because
+older images launched MAVProxy from the read-only `/workspace` directory:
+
+```bash
+docker compose down
+docker compose up --build -d
+```
+
+The current startup script launches Gazebo, SITL, and MAVProxy from the
+writable `runtime/` directory and verifies that MAVProxy remains alive before
+starting MAVROS.
+
 ### Build fails or was interrupted
 
 Run the same command again. Docker will normally continue from its cached
