@@ -61,6 +61,49 @@ When the service is running, open the virtual desktop:
 Gazebo and RViz are rendered inside the container and displayed through the
 browser. Host X11 configuration is not required.
 
+## Start the simulation from inside the container
+
+The normal `docker compose up --build -d` command starts the complete
+simulation automatically. You do not need to enter the container or run a
+second launch command.
+
+For debugging, you can instead open a clean container shell and start the
+simulation manually. First stop the automatically managed container:
+
+```bash
+docker compose down
+```
+
+Create a temporary container and enter its shell:
+
+```bash
+docker compose run --rm --service-ports ardupilot-sim bash
+```
+
+The entrypoint automatically sources the ROS 2, ArduPilot, and project
+workspaces. From inside the container, start the complete stack with:
+
+```bash
+run-simulation
+```
+
+This launches Gazebo, ArduPilot SITL, MAVROS, and the `aruco_landing` node.
+Keep that terminal open while the simulation is running, then open:
+
+<http://localhost:6080/vnc.html?autoconnect=true>
+
+Press `Ctrl+C` inside the container to stop the simulation. Because the
+container was created with `--rm`, it is removed automatically when you exit:
+
+```bash
+exit
+```
+
+Do not run `run-simulation` after entering an already-running service with
+`docker compose exec ardupilot-sim bash`; the normal Compose startup has
+already launched those processes, and a second invocation will conflict with
+them.
+
 ## View logs
 
 Follow the Compose output:
