@@ -5,6 +5,17 @@ runtime_dir="${RUNTIME_DIR:-/workspace/runtime}"
 log_dir="$runtime_dir/logs"
 mkdir -p "$log_dir"
 
+# ArduPilot / MAVProxy create runtime files such as mav.tlog and eeprom.bin in
+# the current directory. /workspace is part of the image and is not writable by
+# the unprivileged ros user, so always launch them from the mounted runtime
+# directory instead.
+if [[ ! -w "$runtime_dir" ]]; then
+  echo "Runtime directory is not writable: $runtime_dir" >&2
+  echo "On the host, run: mkdir -p runtime/logs && chmod u+rwX runtime runtime/logs" >&2
+  exit 1
+fi
+cd "$runtime_dir"
+
 children=()
 
 shutdown() {
@@ -24,13 +35,25 @@ children+=("$!")
 echo "Waiting for SITL MAVLink output on UDP 14551..."
 ready=false
 for _ in $(seq 1 90); do
-  if pgrep -x arducopter >/dev/null && pgrep -f 'gz sim.*iris_runway' >/dev/null; then
+  if pgrep -x arducopter >/dev/null \
+      && pgrep -f 'gz sim.*iris_runway' >/dev/null \
+      && pgrep -f 'mavproxy.py.*14551' >/dev/null; then
     sleep 8
+    if ! pgrep -f 'mavproxy.py.*14551' >/dev/null; then
+      echo "MAVProxy exited during startup. Last simulation log lines:" >&2
+      tail -80 "$log_dir/simulation.log" >&2
+      exit 1
+    fi
     ready=true
     break
   fi
   if ! kill -0 "${children[0]}" 2>/dev/null; then
     echo "Simulation launch exited early. Last log lines:" >&2
+    tail -80 "$log_dir/simulation.log" >&2
+    exit 1
+  fi
+  if grep -qE '\[ERROR\].*process has died.*mavproxy\.py' "$log_dir/simulation.log"; then
+    echo "MAVProxy exited during startup. Last simulation log lines:" >&2
     tail -80 "$log_dir/simulation.log" >&2
     exit 1
   fi
