@@ -10,6 +10,7 @@ ARG MICRO_ROS_AGENT_COMMIT=4f363a79ae96aed39dcc5269f53f73f6a70d3a2c
 ARG MICRO_ROS_MSGS_COMMIT=100bf269e78da3fe0a58f6531ebe47d6991bd9ab
 ARG ROS_GZ_COMMIT=9d7f8c721c233a9ac8b43950129d51e67905523e
 ARG SDFORMAT_URDF_COMMIT=4be22a54e48562323f3e9deecbe1bde894eb7508
+ARG MICRO_XRCE_DDS_GEN_TAG=v4.7.1
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -102,9 +103,8 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
     && rosdep install --from-paths ${ARDU_WS}/src --ignore-src -r -y \
     && rm -rf /var/lib/apt/lists/*
 
-# The ArduPilot prerequisite script installs Micro-XRCE-DDS-Gen and the
-# remaining SITL build tools. The compatibility patch above matches its
-# generated interfaces to the pinned ROS message definitions.
+# Install the remaining ArduPilot SITL build tools. The compatibility patch
+# above matches the generated DDS interfaces to the pinned ROS messages.
 RUN chown -R ros:ros /home/ros ${ARDU_WS} ${PROJECT_WS}
 
 USER ros
@@ -113,6 +113,19 @@ ENV USER=ros \
 RUN cd ${ARDU_WS}/src/ardupilot \
     && SKIP_AP_GRAPHIC_ENV=1 SKIP_AP_COV_ENV=1 \
       Tools/environment_install/install-prereqs-ubuntu.sh -y
+
+# ArduPilot's DDS build requires the generator in addition to the runtime
+# Micro-XRCE-DDS client installed by the prerequisite script.
+RUN sudo apt-get update \
+    && sudo apt-get install -y --no-install-recommends openjdk-17-jre-headless \
+    && sudo rm -rf /var/lib/apt/lists/* \
+    && git clone --recurse-submodules --depth 1 \
+      --branch ${MICRO_XRCE_DDS_GEN_TAG} \
+      https://github.com/ArduPilot/Micro-XRCE-DDS-Gen.git \
+      /home/ros/Micro-XRCE-DDS-Gen \
+    && cd /home/ros/Micro-XRCE-DDS-Gen \
+    && ./gradlew assemble \
+    && test -x scripts/microxrceddsgen
 
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
     && cd ${ARDU_WS} \
