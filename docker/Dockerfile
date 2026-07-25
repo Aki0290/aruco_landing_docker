@@ -108,7 +108,8 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 RUN chown -R ros:ros /home/ros ${ARDU_WS} ${PROJECT_WS}
 
 USER ros
-ENV PATH=/home/ros/.local/bin:/home/ros/Micro-XRCE-DDS-Gen/scripts:${PATH}
+ENV USER=ros \
+    PATH=/home/ros/.local/bin:/home/ros/Micro-XRCE-DDS-Gen/scripts:${PATH}
 RUN cd ${ARDU_WS}/src/ardupilot \
     && SKIP_AP_GRAPHIC_ENV=1 SKIP_AP_COV_ENV=1 \
       Tools/environment_install/install-prereqs-ubuntu.sh -y
