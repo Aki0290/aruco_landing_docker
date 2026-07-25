@@ -1,0 +1,118 @@
+diff --git a/libraries/AP_DDS/AP_DDS_Client.cpp b/libraries/AP_DDS/AP_DDS_Client.cpp
+index ef89c6a0eb..8db9ef4d9d 100644
+--- a/libraries/AP_DDS/AP_DDS_Client.cpp
++++ b/libraries/AP_DDS/AP_DDS_Client.cpp
+@@ -742,18 +742,18 @@ bool AP_DDS_Client::update_topic(ardupilot_msgs_msg_Status& msg)
+     uint8_t fs_iter = 0;
+     msg.failsafe_size = 0;
+     if (rc().in_rc_failsafe()) {
+-        msg.failsafe[fs_iter++] = Status::FS_RADIO;
++        msg.failsafe[fs_iter++] = 21;
+     }
+     if (battery.has_failsafed()) {
+-        msg.failsafe[fs_iter++] = Status::FS_BATTERY;
++        msg.failsafe[fs_iter++] = 22;
+     }
+     // TODO: replace flag with function.
+     if (AP_Notify::flags.failsafe_gcs) {
+-        msg.failsafe[fs_iter++] = Status::FS_GCS;
++        msg.failsafe[fs_iter++] = 23;
+     }
+     // TODO: replace flag with function.
+     if (AP_Notify::flags.failsafe_ekf) {
+-        msg.failsafe[fs_iter++] = Status::FS_EKF;
++        msg.failsafe[fs_iter++] = 24;
+     }
+     msg.failsafe_size = fs_iter;
+ 
+@@ -1093,13 +1093,13 @@ void AP_DDS_Client::on_request(uxrSession* uxr_session, uxrObjectId object_id, u
+             bool param_isinf = true;
+             float param_value = 0.0f;
+             switch (param.value.type) {
+-            case ParameterType::PARAMETER_INTEGER: {
++            case 2: {
+                 param_isnan = isnan(param.value.integer_value);
+                 param_isinf = isinf(param.value.integer_value);
+                 param_value = float(param.value.integer_value);
+                 break;
+             }
+-            case ParameterType::PARAMETER_DOUBLE: {
++            case 3: {
+                 param_isnan = isnan(param.value.double_value);
+                 param_isinf = isinf(param.value.double_value);
+                 param_value = float(param.value.double_value);
+@@ -1193,38 +1193,38 @@ void AP_DDS_Client::on_request(uxrSession* uxr_session, uxrObjectId object_id, u
+ 
+             vp = AP_Param::find(param_key, &var_type);
+             if (vp == nullptr) {
+-                get_parameters_response.values[i].type = ParameterType::PARAMETER_NOT_SET;
++                get_parameters_response.values[i].type = 0;
+                 successful_read &= false;
+                 continue;
+             }
+ 
+             switch (var_type) {
+             case AP_PARAM_INT8: {
+-                get_parameters_response.values[i].type = ParameterType::PARAMETER_INTEGER;
++                get_parameters_response.values[i].type = 2;
+                 get_parameters_response.values[i].integer_value = ((AP_Int8 *)vp)->get();
+                 successful_read &= true;
+                 break;
+             }
+             case AP_PARAM_INT16: {
+-                get_parameters_response.values[i].type = ParameterType::PARAMETER_INTEGER;
++                get_parameters_response.values[i].type = 2;
+                 get_parameters_response.values[i].integer_value = ((AP_Int16 *)vp)->get();
+                 successful_read &= true;
+                 break;
+             }
+             case AP_PARAM_INT32: {
+-                get_parameters_response.values[i].type = ParameterType::PARAMETER_INTEGER;
++                get_parameters_response.values[i].type = 2;
+                 get_parameters_response.values[i].integer_value = ((AP_Int32 *)vp)->get();
+                 successful_read &= true;
+                 break;
+             }
+             case AP_PARAM_FLOAT: {
+-                get_parameters_response.values[i].type = ParameterType::PARAMETER_DOUBLE;
++                get_parameters_response.values[i].type = 3;
+                 get_parameters_response.values[i].double_value = vp->cast_to_float(var_type);
+                 successful_read &= true;
+                 break;
+             }
+             default: {
+-                get_parameters_response.values[i].type = ParameterType::PARAMETER_NOT_SET;
++                get_parameters_response.values[i].type = 0;
+                 successful_read &= false;
+                 break;
+             }
+diff --git a/libraries/AP_DDS/AP_DDS_ExternalControl.cpp b/libraries/AP_DDS/AP_DDS_ExternalControl.cpp
+index 22e95e83f7..35649cc42e 100644
+--- a/libraries/AP_DDS/AP_DDS_ExternalControl.cpp
++++ b/libraries/AP_DDS/AP_DDS_ExternalControl.cpp
+@@ -25,9 +25,9 @@ bool AP_DDS_External_Control::handle_global_position_control(ardupilot_msgs_msg_
+         }
+ 
+         constexpr uint32_t MASK_POS_IGNORE =
+-            GlobalPosition::IGNORE_LATITUDE |
+-            GlobalPosition::IGNORE_LONGITUDE |
+-            GlobalPosition::IGNORE_ALTITUDE;
++            1 |
++            2 |
++            4;
+ 
+         if (!(cmd_pos.type_mask & MASK_POS_IGNORE)) {
+             Location loc(cmd_pos.latitude * 1E7, cmd_pos.longitude * 1E7, alt_cm, alt_frame);
+diff --git a/libraries/AP_DDS/wscript b/libraries/AP_DDS/wscript
+index 04398aed5b..380e8c4a8a 100644
+--- a/libraries/AP_DDS/wscript
++++ b/libraries/AP_DDS/wscript
+@@ -126,7 +126,7 @@ def build(bld):
+             extra_sources.extend([bld.bldnode.find_or_declare(str(dst_dir / name)) for name in [idl_gen.c_name]])
+ 
+         # microxrceddsgen expects a space-seperated list of *.idl files
+-        gen_cmd = f"{bld.env.MICROXRCEDDSGEN[0]} -cs -replace -default-container-prealloc-size {CONTAINER_PREALLOC_SIZE} -d {dst_dir} -I {idl_include_path} {idl_abspaths_str}"
++        gen_cmd = f"{bld.env.MICROXRCEDDSGEN[0]} -cs -replace -d {dst_dir} -I {idl_include_path} {idl_abspaths_str}"
+ 
+         # waf expects a space-separated list of .h and .c files
+         bld(

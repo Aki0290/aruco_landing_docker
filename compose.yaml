@@ -1,0 +1,27 @@
+services:
+  ardupilot-sim:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: aruco-landing-sim:ubuntu22.04
+    container_name: aruco-landing-sim
+    init: true
+    shm_size: "2gb"
+    ports:
+      - "6080:6080"
+      - "5901:5901"
+    environment:
+      ROS_DOMAIN_ID: "42"
+      VNC_RESOLUTION: "1600x950x24"
+      SEARCH_HEIGHT: "${SEARCH_HEIGHT:-2.0}"
+    volumes:
+      - ./runtime:/workspace/runtime
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "pgrep -x arducopter >/dev/null && pgrep -f mavros_node >/dev/null && pgrep -f '/aruco_landing/lib/aruco_landing/landing_node' >/dev/null"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+    stop_grace_period: 30s

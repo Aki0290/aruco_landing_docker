@@ -103,6 +103,9 @@ source install/setup.bash
 ## 2. Running in Simulation
 This section explains how to test the system in a SITL (Software-In-The-Loop) environment.
 
+For a self-contained Ubuntu 22.04 Docker environment that builds and starts
+the complete stack automatically, see [`DOCKER.md`](DOCKER.md).
+
 > [!IMPORTANT]
 > Source ROS 2 and the required workspace in every new terminal.
 > ```bash

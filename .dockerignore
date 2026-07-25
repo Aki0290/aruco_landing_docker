@@ -1,0 +1,13 @@
+.git
+.github
+__pycache__
+*.pyc
+build
+install
+log
+logs
+runtime
+detected_objects_*.txt
+mav.*
+eeprom.bin
+terrain
