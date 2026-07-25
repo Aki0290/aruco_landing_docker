@@ -10,7 +10,6 @@ ARG MICRO_ROS_AGENT_COMMIT=4f363a79ae96aed39dcc5269f53f73f6a70d3a2c
 ARG MICRO_ROS_MSGS_COMMIT=100bf269e78da3fe0a58f6531ebe47d6991bd9ab
 ARG ROS_GZ_COMMIT=9d7f8c721c233a9ac8b43950129d51e67905523e
 ARG SDFORMAT_URDF_COMMIT=4be22a54e48562323f3e9deecbe1bde894eb7508
-ARG MICRO_XRCE_DDS_GEN_TAG=v4.7.1
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -116,6 +115,7 @@ RUN cd ${ARDU_WS}/src/ardupilot \
 
 # ArduPilot's DDS build requires the generator in addition to the runtime
 # Micro-XRCE-DDS client installed by the prerequisite script.
+ARG MICRO_XRCE_DDS_GEN_TAG=v4.7.1
 RUN sudo apt-get update \
     && sudo apt-get install -y --no-install-recommends openjdk-17-jre-headless \
     && sudo rm -rf /var/lib/apt/lists/* \
