@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 export DISPLAY="${DISPLAY:-:1}"
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-42}"
