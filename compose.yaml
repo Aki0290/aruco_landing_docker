@@ -19,7 +19,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - "pgrep -x arducopter >/dev/null && pgrep -f mavros_node >/dev/null && pgrep -f '/aruco_landing/lib/aruco_landing/landing_node' >/dev/null"
+        - "pgrep -x arducopter >/dev/null && pgrep -f mavproxy.py >/dev/null && pgrep -f mavros_node >/dev/null && pgrep -f '/aruco_landing/lib/aruco_landing/landing_node' >/dev/null"
       interval: 10s
       timeout: 5s
       retries: 12

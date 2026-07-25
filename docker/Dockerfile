@@ -134,6 +134,14 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
       --parallel-workers 2 \
       --cmake-args -DBUILD_TESTING=OFF
 
+# The simulation does not need MAVProxy's network-backed SRTM terrain module.
+# Disabling it avoids startup failure when the terrain endpoint returns
+# compressed content without a usable character encoding.
+RUN sed -i '/            "--non-interactive ",/a\            "--default-modules log,signing,wp,rally,fence,ftp,param,relay,tuneopt,arm,mode,calibration,rc,auxopt,misc,cmdlong,battery,output,adsb,layout ",' \
+      ${ARDU_WS}/install/ardupilot_sitl/local/lib/python3.10/dist-packages/ardupilot_sitl/launch.py \
+    && grep -q -- '--default-modules' \
+      ${ARDU_WS}/install/ardupilot_sitl/local/lib/python3.10/dist-packages/ardupilot_sitl/launch.py
+
 COPY --chown=ros:ros . ${PROJECT_WS}/src/aruco_landing
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
     && source ${ARDU_WS}/install/setup.bash \
