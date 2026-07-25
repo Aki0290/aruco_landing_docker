@@ -5,6 +5,7 @@ services:
       dockerfile: docker/Dockerfile
     image: aruco-landing-sim:ubuntu22.04
     container_name: aruco-landing-sim
+    working_dir: /workspace/runtime
     init: true
     shm_size: "2gb"
     ports:
