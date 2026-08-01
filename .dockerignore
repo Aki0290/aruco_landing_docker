@@ -2,11 +2,17 @@
 .github
 __pycache__
 *.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
 build
 install
 log
 logs
 runtime
+test
+DOCKER.md
+simulation/README.md
 detected_objects_*.txt
 mav.*
 eeprom.bin

@@ -65,24 +65,33 @@ RUN python3 -m pip install --no-cache-dir \
 # The EGM96 geoid dataset is required by the MAVROS UAS plugin.
 RUN geographiclib-get-geoids egm96-5
 
-RUN mkdir -p ${ARDU_WS}/src ${PROJECT_WS}/src \
-    && git clone https://github.com/ArduPilot/ardupilot.git ${ARDU_WS}/src/ardupilot \
-    && git -C ${ARDU_WS}/src/ardupilot checkout ${ARDUPILOT_COMMIT} \
-    && git -C ${ARDU_WS}/src/ardupilot submodule update --init --recursive \
-    && git clone https://github.com/ArduPilot/ardupilot_gazebo.git ${ARDU_WS}/src/ardupilot_gazebo \
-    && git -C ${ARDU_WS}/src/ardupilot_gazebo checkout ${ARDUPILOT_GAZEBO_COMMIT} \
-    && git clone https://github.com/ArduPilot/ardupilot_gz.git ${ARDU_WS}/src/ardupilot_gz \
-    && git -C ${ARDU_WS}/src/ardupilot_gz checkout ${ARDUPILOT_GZ_COMMIT} \
-    && git clone https://github.com/ArduPilot/SITL_Models.git ${ARDU_WS}/src/ardupilot_sitl_models \
-    && git -C ${ARDU_WS}/src/ardupilot_sitl_models checkout ${SITL_MODELS_COMMIT} \
-    && git clone https://github.com/micro-ROS/micro-ROS-Agent.git ${ARDU_WS}/src/micro_ros_agent \
-    && git -C ${ARDU_WS}/src/micro_ros_agent checkout ${MICRO_ROS_AGENT_COMMIT} \
-    && git clone https://github.com/micro-ROS/micro_ros_msgs.git ${ARDU_WS}/src/micro_ros_msgs \
-    && git -C ${ARDU_WS}/src/micro_ros_msgs checkout ${MICRO_ROS_MSGS_COMMIT} \
-    && git clone https://github.com/gazebosim/ros_gz.git ${ARDU_WS}/src/ros_gz \
-    && git -C ${ARDU_WS}/src/ros_gz checkout ${ROS_GZ_COMMIT} \
-    && git clone https://github.com/ros/sdformat_urdf.git ${ARDU_WS}/src/sdformat_urdf \
-    && git -C ${ARDU_WS}/src/sdformat_urdf checkout ${SDFORMAT_URDF_COMMIT}
+RUN set -eux; \
+    mkdir -p "${ARDU_WS}/src" "${PROJECT_WS}/src"; \
+    checkout_commit() { \
+      repo_url="$1"; destination="$2"; commit="$3"; \
+      git init "$destination"; \
+      git -C "$destination" remote add origin "$repo_url"; \
+      git -C "$destination" fetch --depth 1 origin "$commit"; \
+      git -C "$destination" checkout --detach FETCH_HEAD; \
+    }; \
+    checkout_commit https://github.com/ArduPilot/ardupilot.git \
+      "${ARDU_WS}/src/ardupilot" "${ARDUPILOT_COMMIT}"; \
+    git -C "${ARDU_WS}/src/ardupilot" submodule update \
+      --init --recursive --depth 1; \
+    checkout_commit https://github.com/ArduPilot/ardupilot_gazebo.git \
+      "${ARDU_WS}/src/ardupilot_gazebo" "${ARDUPILOT_GAZEBO_COMMIT}"; \
+    checkout_commit https://github.com/ArduPilot/ardupilot_gz.git \
+      "${ARDU_WS}/src/ardupilot_gz" "${ARDUPILOT_GZ_COMMIT}"; \
+    checkout_commit https://github.com/ArduPilot/SITL_Models.git \
+      "${ARDU_WS}/src/ardupilot_sitl_models" "${SITL_MODELS_COMMIT}"; \
+    checkout_commit https://github.com/micro-ROS/micro-ROS-Agent.git \
+      "${ARDU_WS}/src/micro_ros_agent" "${MICRO_ROS_AGENT_COMMIT}"; \
+    checkout_commit https://github.com/micro-ROS/micro_ros_msgs.git \
+      "${ARDU_WS}/src/micro_ros_msgs" "${MICRO_ROS_MSGS_COMMIT}"; \
+    checkout_commit https://github.com/gazebosim/ros_gz.git \
+      "${ARDU_WS}/src/ros_gz" "${ROS_GZ_COMMIT}"; \
+    checkout_commit https://github.com/ros/sdformat_urdf.git \
+      "${ARDU_WS}/src/sdformat_urdf" "${SDFORMAT_URDF_COMMIT}"
 
 COPY docker/patches/ardupilot-dds-compat.patch /tmp/ardupilot-dds-compat.patch
 RUN git -C ${ARDU_WS}/src/ardupilot apply /tmp/ardupilot-dds-compat.patch
